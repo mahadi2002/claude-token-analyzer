@@ -1,0 +1,16 @@
+{
+  "description": "Once per day, refresh the usage dashboard in the background when a session starts.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\"; exit 0",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

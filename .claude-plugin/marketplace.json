@@ -1,0 +1,19 @@
+{
+  "name": "mahadi-plugins",
+  "owner": {
+    "name": "Mahadi Hasan Tanmay",
+    "url": "https://github.com/mahadi2002"
+  },
+  "metadata": {
+    "description": "Plugins by Mahadi Hasan Tanmay."
+  },
+  "plugins": [
+    {
+      "name": "token-analyzer",
+      "source": "./",
+      "description": "Local dashboard and daily report of your Claude Code token usage, with a token-leak analyzer and tips.",
+      "version": "0.1.0",
+      "license": "Apache-2.0"
+    }
+  ]
+}

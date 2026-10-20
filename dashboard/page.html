@@ -1,0 +1,766 @@
+<!-- Dashboard page: markup, styles and scripts. Uses the `dash` API from shim.js. -->
+<style>
+#dash-root{--ux-r:16px;--ux-r-sm:10px}
+.ux{font-family:var(--font-anthropic-sans);display:flex;flex-direction:column;gap:var(--cds-gap-lg);max-width:72rem;margin-inline:auto}
+.ux-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--cds-gap-md)}
+.ux-eyebrow{font-size:var(--cds-font-size-caption);letter-spacing:.08em;text-transform:uppercase;color:var(--color-fg-muted)}
+.ux-title{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:2px 0 0}
+.ux-ctrl{display:flex;gap:var(--cds-gap-sm);align-items:center;flex-wrap:wrap}
+.ux-seg{display:inline-flex;padding:3px;border-radius:999px;background:var(--color-panel);border:1px solid var(--color-border-line)}
+.ux-seg button{font:inherit;font-size:var(--cds-font-size-caption);border:0;background:none;color:var(--color-fg-muted);padding:6px 14px;border-radius:999px;cursor:pointer;transition:background var(--cds-dur-slow),color var(--cds-dur-slow)}
+.ux-seg button[aria-selected=true]{background:var(--color-fg);color:var(--color-bg)}
+.ux-pick{font:inherit;font-size:var(--cds-font-size-caption);color:var(--color-fg);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:999px;padding:6px 12px;max-width:16rem}
+.ux-page{display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+.ux-page[hidden]{display:none}
+.ux-card{position:relative;background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--ux-r);padding:var(--cds-pad-lg);min-width:0}
+.ux-card h2{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);margin:0}
+.ux-head{display:flex;align-items:center;justify-content:space-between;gap:var(--cds-gap-sm);margin-bottom:var(--cds-gap-md)}
+.ux-i{font:inherit;width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--color-border-line);background:none;color:var(--color-fg-muted);font-size:12px;line-height:1;cursor:pointer}
+.ux-i[aria-expanded=true]{background:var(--color-fg);color:var(--color-bg);border-color:var(--color-fg)}
+.ux-info{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);background:var(--color-bg);border-radius:var(--ux-r-sm);padding:var(--cds-pad-sm) var(--cds-pad-md);margin:0 0 var(--cds-gap-md);line-height:1.5}
+.ux-info[hidden]{display:none}
+.ux-hero{display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--cds-gap-lg);padding:var(--cds-pad-xl) var(--cds-pad-lg)}
+.ux-big{font-family:var(--font-anthropic-serif);font-weight:400;font-size:clamp(2.6rem,7vw,4rem);line-height:1;font-variant-numeric:tabular-nums;margin:var(--cds-gap-sm) 0}
+.ux-unit{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.ux-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--cds-gap-md)}
+.ux-chip{font-size:var(--cds-font-size-caption);padding:3px 10px;border-radius:999px;background:var(--color-bg);border:1px solid var(--color-border-line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ux-chip.good{color:var(--color-ok)}.ux-chip.bad{color:var(--color-warn)}
+.ux-ring{width:132px;text-align:center}
+.ux-ring svg{display:block}
+.ux-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));gap:var(--cds-gap-md)}
+.ux-tile{font:inherit;text-align:left;cursor:pointer;color:inherit;display:flex;flex-direction:column;gap:4px;transition:border-color var(--cds-dur-slow),transform var(--cds-dur-slow)}
+.ux-tile:hover{border-color:var(--color-fg-muted)}
+.ux-tile .lab{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.ux-tile .val{font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;line-height:1.1}
+.ux-tile .spark{display:block;height:34px;margin-top:2px}
+.ux-tile .more{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);line-height:1.45;border-top:1px solid var(--color-border-line);padding-top:6px;margin-top:4px}
+.ux-tile .more[hidden]{display:none}
+.ux-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.ux-chart{position:relative;min-height:200px}
+.ux-chart.sm{min-height:170px}
+.ux-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;display:none;z-index:3}
+.ux-tip .d{color:var(--cds-text-secondary)}
+.ux-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--cds-gap-md)}
+.ux-pill{font-size:var(--cds-font-size-caption);padding:4px 10px;border-radius:999px;font-variant-numeric:tabular-nums;border:1px solid var(--color-border-line);background:var(--color-bg)}
+.ux-pill b{font-weight:var(--cds-font-weight-medium)}
+.ux-tips{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--cds-gap-sm)}
+.ux-tips li{display:flex;gap:var(--cds-gap-sm);align-items:flex-start;font-size:var(--cds-font-size-body);line-height:1.45}
+.ux-tips li::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;margin-top:.5em;background:var(--color-fg)}
+.ux-det{margin-top:var(--cds-gap-md)}
+.ux-det summary{cursor:pointer;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);list-style:none;display:inline-flex;align-items:center;gap:6px}
+.ux-det summary::-webkit-details-marker{display:none}
+.ux-det summary::after{content:"›";transition:transform var(--cds-dur-slow)}
+.ux-det[open] summary::after{transform:rotate(90deg)}
+.ux-det .body{margin-top:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);line-height:1.5}
+.ux-det .body h3{font-size:var(--cds-font-size-caption);color:var(--color-fg);font-weight:var(--cds-font-weight-medium);margin:var(--cds-gap-sm) 0 2px}
+.ux-det .body p,.ux-det .body ul{margin:0 0 4px}
+.ux-donut{display:grid;grid-template-columns:140px 1fr;gap:var(--cds-gap-md);align-items:center}
+@media (max-width:30rem){.ux-donut{grid-template-columns:1fr}.ux-hero{grid-template-columns:1fr}.ux-ring{margin-inline:auto}}
+.ux-leg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:var(--cds-font-size-caption)}
+.ux-leg li{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center}
+.ux-leg i{width:10px;height:10px;border-radius:3px}
+.ux-leg span:last-child{color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.ux-tbl{max-height:22rem;overflow:auto}
+.ux-tbl table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.ux-tbl th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:6px 8px;border-bottom:1px solid var(--color-border-line)}
+.ux-tbl td{padding:6px 8px;border-bottom:1px solid var(--color-border-line);color:var(--color-fg)}
+.ux-tbl .n{text-align:right}
+@media (max-width:40rem){.ux-hide{display:none}}
+.ux-foot{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);text-align:center}
+.ux-fail{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:inherit;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.ux-fail::before{content:"";width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+[data-dash-source-state=empty]{color:transparent}
+@media (prefers-reduced-motion:no-preference){.ux-in{animation:uxin var(--cds-dur-slow) var(--cds-ease-out) both}@keyframes uxin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+<div class="ux">
+  <div class="ux-top" id="top">
+    <div><div class="ux-eyebrow">Claude Code · this computer</div><h1 class="ux-title">Usage</h1></div>
+    <div class="ux-ctrl">
+      <div class="ux-seg" role="tablist">
+        <button role="tab" data-tab="daily" aria-selected="true">Day</button>
+        <button role="tab" data-tab="weekly" aria-selected="false">Week</button>
+        <button role="tab" data-tab="month" aria-selected="false">Month</button>
+        <button role="tab" data-tab="year" aria-selected="false">Year</button>
+        <button role="tab" data-tab="all" aria-selected="false">All time</button>
+      </div>
+      <select class="ux-pick" id="pick-day" aria-label="Day" data-source="daily"></select>
+      <select class="ux-pick" id="pick-week" aria-label="Week" data-source="weekly" hidden></select>
+      <select class="ux-pick" id="pick-period" aria-label="Period" data-source="periods" hidden></select>
+    </div>
+  </div>
+
+  <!-- DAY -->
+  <section class="ux-page" id="daily">
+    <div class="ux-card ux-hero">
+      <div>
+        <div class="ux-eyebrow" id="d-date">—</div>
+        <div class="ux-big" id="d-w" data-source="day_stats" data-field="weighted">—</div>
+        <div class="ux-unit">weighted tokens <button class="ux-i" data-info="i-weighted" aria-expanded="false" aria-label="What is this">i</button></div>
+        <p class="ux-info" id="i-weighted" hidden>Each token type counted by its relative price: input ×1, cache write ×1.25, cache read ×0.1, output ×5. Closer to what uses up your limits than the raw total.</p>
+        <div class="ux-chips">
+          <span class="ux-chip" id="d-c1" data-source="day_stats" data-field="day_change">—</span>
+          <span class="ux-chip" id="d-c2" data-source="day_stats" data-field="vs_avg7">—</span>
+        </div>
+      </div>
+      <div class="ux-ring" id="d-ring" data-source="day_stats"></div>
+    </div>
+
+    <div class="ux-tiles">
+      <button class="ux-card ux-tile" data-more="m-ctx"><span class="lab">Context / request</span><span class="val" id="t-ctx" data-source="day_stats" data-field="avg_context">—</span><span class="spark" id="s-ctx" data-source="day_stats"></span><span class="more" id="m-ctx" hidden>How much conversation Claude re-reads on every turn. Lower means leaner sessions; aim under 150k.</span></button>
+      <button class="ux-card ux-tile" data-more="m-req"><span class="lab">Requests</span><span class="val" id="t-req" data-source="day_stats" data-field="requests">—</span><span class="spark" id="s-req" data-source="day_stats"></span><span class="more" id="m-req" hidden>Model calls made by Claude Code, including tool steps.</span></button>
+      <button class="ux-card ux-tile" data-more="m-ses"><span class="lab">Sessions</span><span class="val" id="t-ses" data-source="day_stats" data-field="sessions">—</span><span class="spark" id="s-ses" data-source="day_stats"></span><span class="more" id="m-ses" hidden>Separate conversations active this day.</span></button>
+      <button class="ux-card ux-tile" data-more="m-was"><span class="lab">Avoidable</span><span class="val" id="t-was" data-source="day_stats" data-field="waste_est">—</span><span class="spark" id="s-was" data-source="day_stats"></span><span class="more" id="m-was" hidden>Estimate of tokens a leaner workflow would have saved. Thresholds are my choices, so read it as a direction.</span></button>
+    </div>
+
+    <div class="ux-card" id="hours">
+      <div class="ux-head"><h2>Hour by hour</h2><button class="ux-i" data-info="i-hours" aria-expanded="false" aria-label="About this chart">i</button></div>
+      <p class="ux-info" id="i-hours" hidden>Weighted tokens per hour across your usage day. Shaded bands are 5-hour windows: each opens at your first request after the last one closed, like Claude's session limit. Built from hourly totals, so starts are rounded to the hour.</p>
+      <div class="ux-chart" id="hour-chart" data-source="hourly windows"></div>
+      <div class="ux-pills" id="win-pills" data-source="windows"></div>
+    </div>
+
+    <div class="ux-card" id="tips">
+      <div class="ux-head"><h2>Today's moves</h2><span class="ux-eyebrow" id="r-when" data-source="report"></span></div>
+      <ul class="ux-tips" id="r-top" data-source="report"></ul>
+      <details class="ux-det"><summary>Full report</summary><div class="body" id="r-full" data-source="report"></div></details>
+    </div>
+
+    <div class="ux-grid">
+      <div class="ux-card" id="trend">
+        <div class="ux-head"><h2>Getting leaner?</h2><button class="ux-i" data-info="i-trend" aria-expanded="false" aria-label="About this chart">i</button></div>
+        <p class="ux-info" id="i-trend" hidden>Average context per request each week. A falling line means smaller, better-scoped sessions.</p>
+        <div class="ux-chart sm" id="ctx-chart" data-source="weekly_eff"></div>
+      </div>
+      <div class="ux-card" id="leaks">
+        <div class="ux-head"><h2>Where it leaks</h2><button class="ux-i" data-info="i-leaks" aria-expanded="false" aria-label="About this chart">i</button></div>
+        <p class="ux-info" id="i-leaks" hidden>Context bloat: context above 150k per request. Old session resumed: whole context re-cached after a day idle. Duplicate: same request in two sessions. Polling: 100+ near-empty requests in an hour. Overflow: reloading after a chat ran out of context. All time.</p>
+        <div class="ux-donut"><div id="kind-donut" data-source="waste_kinds"></div><ul class="ux-leg" id="kind-leg" data-source="waste_kinds"></ul></div>
+        <details class="ux-det"><summary>Flagged on this day</summary>
+          <div class="ux-tbl"><table id="ev-table" data-source="events" data-row-key="day,session,kind">
+            <thead><tr><th data-field="title">Session</th><th data-field="kind">Cause</th><th data-field="waste_est" class="n">Est.</th></tr></thead><tbody></tbody></table></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEK -->
+  <section class="ux-page" id="weekly" hidden>
+    <div class="ux-card ux-hero">
+      <div>
+        <div class="ux-eyebrow" id="w-date">—</div>
+        <div class="ux-big" id="w-w" data-source="weekly" data-field="weighted">—</div>
+        <div class="ux-unit">weighted tokens</div>
+        <div class="ux-chips"><span class="ux-chip" id="w-c1" data-source="weekly" data-field="change">—</span><span class="ux-chip" id="w-c2" data-source="weekly" data-field="total">—</span></div>
+      </div>
+      <div class="ux-ring" id="w-ring" data-source="weekly period_leaks"></div>
+    </div>
+
+    <div class="ux-tiles">
+      <button class="ux-card ux-tile" data-more="wm-out"><span class="lab">Output</span><span class="val" id="wt-out" data-source="weekly" data-field="output">—</span><span class="spark" id="ws-out" data-source="weekly"></span><span class="more" id="wm-out" hidden>Text and code Claude wrote.</span></button>
+      <button class="ux-card ux-tile" data-more="wm-req"><span class="lab">Requests</span><span class="val" id="wt-req" data-source="weekly" data-field="requests">—</span><span class="spark" id="ws-req" data-source="weekly"></span><span class="more" id="wm-req" hidden>Model calls, including tool steps.</span></button>
+      <button class="ux-card ux-tile" data-more="wm-ses"><span class="lab">Sessions</span><span class="val" id="wt-ses" data-source="weekly" data-field="sessions">—</span><span class="spark" id="ws-ses" data-source="weekly"></span><span class="more" id="wm-ses" hidden>Distinct conversations active in the week.</span></button>
+      <button class="ux-card ux-tile" data-more="wm-cr"><span class="lab">Cache reads</span><span class="val" id="wt-cr" data-source="weekly" data-field="cache_share">—</span><span class="spark" id="ws-cr" data-source="weekly"></span><span class="more" id="wm-cr" hidden>Share of raw tokens that were context re-read each turn. Cheap per token, but the volume adds up.</span></button>
+    </div>
+
+    <div class="ux-card" id="weeks">
+      <div class="ux-head"><h2>Every week</h2><span class="ux-eyebrow">tap a bar</span></div>
+      <div class="ux-chart" id="weekly-chart" data-source="weekly"></div>
+    </div>
+
+    <div class="ux-grid">
+      <div class="ux-card" id="by-type"><div class="ux-head"><h2>Type of work</h2></div><div class="ux-donut"><div id="task-donut" data-source="by_task"></div><ul class="ux-leg" id="task-leg" data-source="by_task"></ul></div></div>
+      <div class="ux-card" id="by-project"><div class="ux-head"><h2>Projects</h2></div><div class="ux-donut"><div id="proj-donut" data-source="by_project"></div><ul class="ux-leg" id="proj-leg" data-source="by_project"></ul></div></div>
+    </div>
+
+    <div class="ux-card" id="w-leaks-card">
+      <div class="ux-head"><h2>Where it leaked this week</h2></div>
+      <div class="ux-donut"><div id="w-leak-donut" data-source="period_leaks"></div><ul class="ux-leg" id="w-leak-leg" data-source="period_leaks"></ul></div>
+    </div>
+    <div class="ux-card" id="routine">
+      <div class="ux-head"><h2>Your rhythm</h2><button class="ux-i" data-info="i-rhythm" aria-expanded="false" aria-label="About this chart">i</button></div>
+      <p class="ux-info" id="i-rhythm" hidden>Requests by weekday and hour (your local time), all weeks. Darker means busier.</p>
+      <div class="ux-chart sm" id="heat-chart" data-source="routine"></div>
+      <details class="ux-det"><summary>Sessions this week</summary>
+        <div class="ux-tbl"><table id="ses-table" data-source="by_session" data-row-key="week_start,session">
+          <thead><tr><th data-field="title">Session</th><th data-field="task_type" class="ux-hide">Type</th><th data-field="weighted" class="n">Weighted</th></tr></thead><tbody></tbody></table></div>
+      </details>
+    </div>
+    <p class="ux-foot">Claude Code sessions on this computer only. claude.ai chats and cloud sessions leave no local logs. Generated by claude-token-analyzer.</p>
+  </section>
+  <!-- MONTH / YEAR / ALL TIME -->
+  <section class="ux-page" id="period" hidden>
+    <div class="ux-card ux-hero">
+      <div>
+        <div class="ux-eyebrow" id="p-date">—</div>
+        <div class="ux-big" id="p-w" data-source="periods" data-field="weighted">—</div>
+        <div class="ux-unit">weighted tokens</div>
+        <div class="ux-chips"><span class="ux-chip" id="p-c1" data-source="periods" data-field="change">—</span><span class="ux-chip" id="p-c2" data-source="periods" data-field="active_days">—</span></div>
+      </div>
+      <div class="ux-ring" id="p-ring" data-source="periods"></div>
+    </div>
+
+    <div class="ux-tiles">
+      <button class="ux-card ux-tile" data-more="pm-ctx"><span class="lab">Context / request</span><span class="val" id="pt-ctx" data-source="periods" data-field="avg_context">—</span><span class="spark" id="ps-ctx" data-source="periods day_stats"></span><span class="more" id="pm-ctx" hidden>Conversation Claude re-reads each turn. Lower is leaner; aim under 150k.</span></button>
+      <button class="ux-card ux-tile" data-more="pm-req"><span class="lab">Requests</span><span class="val" id="pt-req" data-source="periods" data-field="requests">—</span><span class="spark" id="ps-req" data-source="periods day_stats"></span><span class="more" id="pm-req" hidden>Model calls, including tool steps.</span></button>
+      <button class="ux-card ux-tile" data-more="pm-ses"><span class="lab">Sessions</span><span class="val" id="pt-ses" data-source="periods" data-field="sessions">—</span><span class="spark" id="ps-ses" data-source="periods day_stats"></span><span class="more" id="pm-ses" hidden>Distinct conversations in this period.</span></button>
+      <button class="ux-card ux-tile" data-more="pm-was"><span class="lab">Avoidable</span><span class="val" id="pt-was" data-source="periods" data-field="waste_est">—</span><span class="spark" id="ps-was" data-source="periods day_stats"></span><span class="more" id="pm-was" hidden>Estimated tokens a leaner workflow would have saved. A direction, not an exact figure.</span></button>
+    </div>
+
+    <div class="ux-card" id="p-bars-card">
+      <div class="ux-head"><h2 id="p-bars-title">Over time</h2><span class="ux-eyebrow">dark = avoidable</span></div>
+      <div class="ux-chart" id="p-bars" data-source="periods day_stats"></div>
+    </div>
+
+    <div class="ux-card" id="p-insights">
+      <div class="ux-head"><h2>Analyzer</h2><button class="ux-i" data-info="i-pins" aria-expanded="false" aria-label="About the analyzer">i</button></div>
+      <p class="ux-info" id="i-pins" hidden>Worked out from this period's logs: the largest leak, whether sessions got leaner from start to end, and the costliest session. Leak definitions are under the Day view's "Where it leaks".</p>
+      <ul class="ux-tips" id="p-tips" data-source="periods period_leaks"></ul>
+    </div>
+
+    <div class="ux-grid">
+      <div class="ux-card" id="p-trend-card">
+        <div class="ux-head"><h2>Getting leaner?</h2></div>
+        <div class="ux-chart sm" id="p-trend" data-source="periods day_stats"></div>
+      </div>
+      <div class="ux-card" id="p-leaks-card">
+        <div class="ux-head"><h2>Where it leaks</h2></div>
+        <div class="ux-donut"><div id="p-leak-donut" data-source="period_leaks"></div><ul class="ux-leg" id="p-leak-leg" data-source="period_leaks"></ul></div>
+        <details class="ux-det"><summary>Leakiest sessions</summary>
+          <div class="ux-tbl"><table id="p-leak-table" data-source="period_leaks" data-row-key="level,period,dim,name">
+            <thead><tr><th data-field="title">Session</th><th data-field="waste" class="n">Avoidable</th></tr></thead><tbody></tbody></table></div>
+        </details>
+      </div>
+    </div>
+
+    <div class="ux-grid">
+      <div class="ux-card" id="p-type-card"><div class="ux-head"><h2>Type of work</h2></div><div class="ux-donut"><div id="p-task-donut" data-source="period_mix"></div><ul class="ux-leg" id="p-task-leg" data-source="period_mix"></ul></div></div>
+      <div class="ux-card" id="p-proj-card"><div class="ux-head"><h2>Projects</h2></div><div class="ux-donut"><div id="p-proj-donut" data-source="period_mix"></div><ul class="ux-leg" id="p-proj-leg" data-source="period_mix"></ul></div></div>
+    </div>
+  </section>
+</div>
+<script>
+dash.calc('weekly', {
+  title: 'Weekly totals',
+  description: 'Sums each Monday-start week (empty weeks as 0), with the weighted change from the week before and cache-read share of raw tokens.',
+  inputs: ['usage'],
+  fn: (usage) => {
+    const ws = [...new Set(usage.map((r) => r.week_start))].sort();
+    const weeks = []; if (ws.length) { let d = new Date(ws[0] + 'T00:00:00Z'); const e = new Date(ws[ws.length - 1] + 'T00:00:00Z'); while (d <= e) { weeks.push(d.toISOString().slice(0, 10)); d = new Date(d.getTime() + 6048e5); } }
+    let prev = null;
+    return weeks.map((w) => {
+      const rs = usage.filter((r) => r.week_start === w);
+      const s = (k) => rs.reduce((a, r) => a + (+r[k] || 0), 0);
+      const total = s('total'), weighted = s('weighted');
+      const row = { week_start: w, weighted, total, output: s('output'), cache_read: s('cache_read'), requests: s('requests'), sessions: new Set(rs.map((r) => r.session)).size, cache_share: total ? s('cache_read') / total : 0, change: prev ? (weighted - prev) / prev : null };
+      prev = weighted || null;
+      return row;
+    });
+  },
+});
+dash.calc('by_task', {
+  title: 'Weighted tokens by type of work, per week',
+  description: 'Weighted tokens and requests per week and task type.',
+  inputs: ['usage'],
+  fn: (usage) => Array.from(d3.rollup(usage, (rs) => ({ weighted: d3.sum(rs, (r) => +r.weighted), requests: d3.sum(rs, (r) => +r.requests) }), (r) => r.week_start, (r) => r.task_type), ([w, m]) => Array.from(m, ([t, v]) => ({ week_start: w, task_type: t, ...v }))).flat(),
+});
+dash.calc('by_project', {
+  title: 'Weighted tokens by project, per week',
+  description: 'Weighted tokens and requests per week and project.',
+  inputs: ['usage'],
+  fn: (usage) => Array.from(d3.rollup(usage, (rs) => ({ weighted: d3.sum(rs, (r) => +r.weighted), requests: d3.sum(rs, (r) => +r.requests) }), (r) => r.week_start, (r) => r.project), ([w, m]) => Array.from(m, ([p, v]) => ({ week_start: w, project: p, ...v }))).flat(),
+});
+dash.calc('by_session', {
+  title: 'Sessions per week',
+  description: 'Each session’s weighted tokens and requests within each week.',
+  inputs: ['usage'],
+  fn: (usage) => Array.from(d3.rollup(usage, (rs) => ({ title: rs[0].title, project: rs[0].project, task_type: rs[0].task_type, requests: d3.sum(rs, (r) => +r.requests), weighted: d3.sum(rs, (r) => +r.weighted) }), (r) => r.week_start, (r) => r.session), ([w, m]) => Array.from(m, ([s, v]) => ({ week_start: w, session: s, ...v }))).flat(),
+});
+dash.calc('routine', {
+  title: 'Requests by weekday and hour',
+  description: 'Requests summed by weekday (Mon–Sun) and hour of day in local time, all weeks.',
+  inputs: ['usage'],
+  fn: (usage) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const m = d3.rollup(usage, (rs) => d3.sum(rs, (r) => +r.requests), (r) => days[new Date(r.hour.slice(0, 10) + 'T00:00:00Z').getUTCDay()], (r) => +r.hour.slice(11, 13));
+    const out = [];
+    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach((d) => { for (let h = 0; h < 24; h++) out.push({ weekday: d, hour: h, requests: (m.get(d) && m.get(d).get(h)) || 0 }); });
+    return out;
+  },
+});
+dash.calc('hourly', {
+  title: 'Usage per hour',
+  description: 'Weighted and raw tokens and requests per clock hour (local time), all sessions combined, tagged with its usage day.',
+  inputs: ['usage'],
+  fn: (usage) => Array.from(d3.rollup(usage, (rs) => ({ day: rs[0].day, weighted: d3.sum(rs, (r) => +r.weighted), total: d3.sum(rs, (r) => +r.total), requests: d3.sum(rs, (r) => +r.requests) }), (r) => r.hour.slice(0, 13)), ([h, v]) => ({ hour: h, clock: +h.slice(11, 13), ...v })).sort((a, b) => d3.ascending(a.hour, b.hour)),
+});
+dash.calc('windows', {
+  title: '5-hour usage windows',
+  description: 'Windows that open at the first active hour after the previous window closed and last 5 hours; sums weighted and raw tokens and requests inside each.',
+  inputs: ['hourly'],
+  fn: (hourly) => {
+    const out = []; let w = null;
+    hourly.forEach((h) => {
+      const t = new Date(h.hour + ':00:00').getTime();
+      if (!w || t >= w.t + 5 * 36e5) { w = { t, start: h.hour, day: h.day, weighted: 0, total: 0, requests: 0 }; out.push(w); }
+      w.weighted += h.weighted; w.total += h.total; w.requests += h.requests;
+    });
+    return out.map(({ t, ...r }) => r);
+  },
+});
+dash.calc('day_stats', {
+  title: 'Daily efficiency',
+  description: 'Each day’s figures with the change from the previous active day and from the average of the 7 previous active days.',
+  inputs: ['daily'],
+  fn: (daily) => {
+    const act = [];
+    return daily.map((x) => {
+      const r = { day: x.day, weighted: +x.weighted || 0, requests: +x.requests || 0, sessions: +x.sessions || 0, avg_context: +x.avg_context || 0, waste_est: +x.waste_est || 0, waste_share: +x.waste_share || 0 };
+      const prev = act.slice(-7), last = act[act.length - 1];
+      const avg7 = prev.length ? prev.reduce((a, p) => a + p.weighted, 0) / prev.length : null;
+      const out = { ...r, avg7, day_change: last && r.weighted ? (r.weighted - last.weighted) / last.weighted : null, vs_avg7: avg7 && r.weighted ? (r.weighted - avg7) / avg7 : null };
+      if (r.requests) act.push(r);
+      return out;
+    });
+  },
+});
+dash.calc('weekly_eff', {
+  title: 'Weekly context per request',
+  description: 'Per Monday-start week: (input + cache read + cache write) / requests.',
+  inputs: ['usage'],
+  fn: (usage) => Array.from(d3.rollup(usage, (rs) => d3.sum(rs, (r) => +r.input + +r.cache_read + +r.cache_write) / (d3.sum(rs, (r) => +r.requests) || 1), (r) => r.week_start), ([week_start, avg_context]) => ({ week_start, avg_context })).sort((a, b) => d3.ascending(a.week_start, b.week_start)),
+});
+dash.calc('waste_kinds', {
+  title: 'Avoidable tokens by cause',
+  description: 'Sum of the avoidable estimate per cause over all days.',
+  inputs: ['events'],
+  fn: (events) => Array.from(d3.rollup(events, (rs) => d3.sum(rs, (r) => +r.waste_est), (r) => r.kind), ([kind, total]) => ({ kind, total })),
+});
+</script>
+<script>
+dash.calc('periods', {
+  title: 'Monthly, yearly and lifetime totals',
+  description: 'Per month, per year and all time: weighted and raw tokens, requests, sessions, active days, avoidable estimate and share, context per request, and the change in weighted tokens from the previous month or year.',
+  inputs: ['usage', 'daily'],
+  fn: (usage, daily) => {
+    const keys = { month: (d) => d.slice(0, 7), year: (d) => d.slice(0, 4), all: () => 'all' };
+    const out = [];
+    Object.entries(keys).forEach(([level, k]) => {
+      const ses = d3.rollup(usage, (rs) => new Set(rs.map((r) => r.session)).size, (r) => k(r.day));
+      const g = d3.rollup(daily, (rs) => {
+        const req = d3.sum(rs, (r) => +r.requests || 0);
+        const weighted = d3.sum(rs, (r) => +r.weighted || 0), waste = d3.sum(rs, (r) => +r.waste_est || 0);
+        return { weighted, total: d3.sum(rs, (r) => +r.total || 0), output: d3.sum(rs, (r) => +r.output || 0), requests: req, active_days: rs.filter((r) => +r.requests > 0).length, waste_est: waste, waste_share: weighted ? Math.min(1, waste / weighted) : 0, avg_context: req ? d3.sum(rs, (r) => (+r.avg_context || 0) * (+r.requests || 0)) / req : 0 };
+      }, (r) => k(r.day));
+      let prev = null;
+      Array.from(g).sort((a, b) => d3.ascending(a[0], b[0])).forEach(([period, v]) => {
+        if (!v.requests && level !== 'all') return;
+        out.push({ level, period, ...v, sessions: ses.get(period) || 0, change: level !== 'all' && prev ? (v.weighted - prev) / prev : null });
+        prev = v.weighted;
+      });
+    });
+    return out;
+  },
+});
+dash.calc('period_mix', {
+  title: 'Type of work and projects per month, year and all time',
+  description: 'Weighted tokens by task type and by project for each month, year and all time.',
+  inputs: ['usage'],
+  fn: (usage) => {
+    const keys = { month: (d) => d.slice(0, 7), year: (d) => d.slice(0, 4), all: () => 'all' };
+    const out = [];
+    Object.entries(keys).forEach(([level, k]) => [['task', 'task_type'], ['project', 'project']].forEach(([dim, col]) => {
+      d3.rollup(usage, (rs) => d3.sum(rs, (r) => +r.weighted || 0), (r) => k(r.day), (r) => r[col]).forEach((m, period) => m.forEach((weighted, name) => out.push({ level, period, dim, name, weighted })));
+    }));
+    return out;
+  },
+});
+dash.calc('period_leaks', {
+  title: 'Leaks per week, month, year and all time',
+  description: 'Avoidable estimate summed by cause and by session for each Monday-start week, month, year and all time.',
+  inputs: ['events'],
+  fn: (events) => {
+    const wk = (day) => { const d = new Date(day + 'T00:00:00Z'); return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 864e5).toISOString().slice(0, 10); };
+    const keys = { week: wk, month: (d) => d.slice(0, 7), year: (d) => d.slice(0, 4), all: () => 'all' };
+    const out = [];
+    Object.entries(keys).forEach(([level, k]) => {
+      d3.rollup(events, (rs) => d3.sum(rs, (r) => +r.waste_est || 0), (r) => k(r.day), (r) => r.kind).forEach((m, period) => m.forEach((waste, name) => out.push({ level, period, dim: 'kind', name, title: name, waste })));
+      d3.rollup(events, (rs) => ({ waste: d3.sum(rs, (r) => +r.waste_est || 0), title: rs[0].title }), (r) => k(r.day), (r) => r.session).forEach((m, period) => m.forEach((v, name) => out.push({ level, period, dim: 'session', name, title: v.title, waste: v.waste })));
+    });
+    return out;
+  },
+});
+</script>
+<script>
+(function () {
+  const C = (v) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+  const P = d3.format('.0%');
+  const N = d3.format(',');
+  const dLab = (d) => d3.utcFormat('%A, %b %-d')(new Date(d + 'T00:00:00Z'));
+  const dShort = (d) => d3.utcFormat('%a %b %-d')(new Date(d + 'T00:00:00Z'));
+  const wLab = (w) => { const a = new Date(w + 'T00:00:00Z'); return d3.utcFormat('%b %-d')(a) + ' – ' + d3.utcFormat('%b %-d')(new Date(a.getTime() + 6 * 864e5)); };
+  const hh = (n) => String(((n % 24) + 24) % 24).padStart(2, '0') + ':00';
+  const el = (id) => document.getElementById(id);
+  let tab = 'daily';
+  let animated = false;
+
+  // interactions: info buttons, tap-to-expand tiles, tabs, pickers
+  document.querySelectorAll('.ux-i').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); const p = el(b.dataset.info); p.hidden = !p.hidden; b.setAttribute('aria-expanded', String(!p.hidden)); }));
+  document.querySelectorAll('.ux-tile').forEach((b) => b.addEventListener('click', () => { const p = el(b.dataset.more); p.hidden = !p.hidden; }));
+  const show = (name) => {
+    tab = name;
+    document.querySelectorAll('.ux-seg button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+    el('daily').hidden = name !== 'daily'; el('weekly').hidden = name !== 'weekly';
+    el('pick-day').hidden = name !== 'daily'; el('pick-week').hidden = name !== 'weekly';
+    el('period').hidden = !LEVELS.includes(name); el('pick-period').hidden = !['month', 'year'].includes(name);
+    dash.setLink(name);
+    draw();
+  };
+  document.querySelectorAll('.ux-seg button').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
+  el('pick-day').addEventListener('change', (e) => dash.setParams({ day: e.target.value }));
+  el('pick-week').addEventListener('change', (e) => dash.setParams({ week: e.target.value }));
+  const LEVELS = ['month', 'year', 'all'];
+
+  // shared drawing helpers
+  const tipFor = (box) => { let t = box.querySelector('.ux-tip'); if (!t) { t = document.createElement('div'); t.className = 'ux-tip'; box.appendChild(t); } return t; };
+  const tipShow = (box, t, ev, lines) => {
+    t.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); if (i === 0) d.className = 'd'; d.textContent = l; return d; }));
+    t.style.display = 'block';
+    const r = box.getBoundingClientRect(); let x = ev.clientX - r.left + 12;
+    if (x + t.offsetWidth > box.clientWidth) x = Math.max(0, ev.clientX - r.left - t.offsetWidth - 12);
+    t.style.left = x + 'px'; t.style.top = Math.max(0, ev.clientY - r.top - 8 - t.offsetHeight) + 'px';
+  };
+  const chip = (id, v, label, lowerIsGood = true) => {
+    const c = el(id);
+    if (v == null || !isFinite(v)) { c.textContent = label + ' —'; c.className = 'ux-chip'; return; }
+    c.textContent = (v >= 0 ? '↑ ' : '↓ ') + P(Math.abs(v)) + ' ' + label;
+    c.className = 'ux-chip ' + ((v <= 0) === lowerIsGood ? 'good' : 'bad');
+  };
+  const ring = (id, share, label) => {
+    const box = el(id); box.replaceChildren();
+    const S = 132, r = 54, w = 10, circ = 2 * Math.PI * r;
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${S} ${S}`);
+    svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', r).attr('fill', 'none').attr('stroke', 'var(--color-border-line)').attr('stroke-width', w);
+    if (share != null) svg.append('circle').attr('cx', S / 2).attr('cy', S / 2).attr('r', r).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', w).attr('stroke-linecap', 'round')
+      .attr('stroke-dasharray', `${Math.max(0.001, share) * circ} ${circ}`).attr('transform', `rotate(-90 ${S / 2} ${S / 2})`);
+    svg.append('text').attr('x', S / 2).attr('y', S / 2 - 2).attr('text-anchor', 'middle').attr('font-family', 'var(--font-anthropic-serif)').attr('font-size', 28).attr('fill', 'var(--color-fg)').text(share == null ? '—' : P(share));
+    svg.append('text').attr('x', S / 2).attr('y', S / 2 + 18).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(label);
+  };
+  const spark = (id, vals, hi) => {
+    const box = el(id); box.replaceChildren();
+    const W = box.clientWidth || 140, H = 34;
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'none');
+    if (!vals.length) return;
+    const x = d3.scaleBand(d3.range(vals.length), [0, W]).padding(0.25);
+    const y = d3.scaleLinear([0, d3.max(vals) || 1], [H, 2]);
+    svg.selectAll('rect').data(vals).join('rect').attr('x', (v, i) => x(i)).attr('width', x.bandwidth()).attr('y', (v) => y(v)).attr('height', (v) => H - y(v)).attr('rx', Math.min(2, x.bandwidth() / 2))
+      .attr('fill', (v, i) => i === hi ? dash.colors[0] : 'var(--cds-chart-muted)');
+  };
+  const donut = (boxId, legId, rows, key, palette) => {
+    const box = el(boxId), leg = el(legId); box.replaceChildren(); leg.replaceChildren();
+    rows = rows.filter((r) => r.weighted > 0).sort((a, b) => b.weighted - a.weighted);
+    if (!rows.length) { const li = document.createElement('li'); li.textContent = 'No usage'; leg.appendChild(li); return; }
+    const top = rows.slice(0, 4); const rest = rows.slice(4);
+    if (rest.length) top.push({ [key]: 'Other (' + rest.length + ')', weighted: d3.sum(rest, (r) => r.weighted), others: rest });
+    const tot = d3.sum(top, (r) => r.weighted);
+    const S = 140, svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${S} ${S}`).style('max-width', '140px');
+    const arc = d3.arc().innerRadius(44).outerRadius(64).cornerRadius(3).padAngle(0.02);
+    const t = tipFor(box.parentElement);
+    svg.append('g').attr('transform', `translate(${S / 2},${S / 2})`).selectAll('path').data(d3.pie().sort(null).value((r) => r.weighted)(top)).join('path')
+      .attr('d', arc).attr('fill', (d, i) => palette[i % palette.length])
+      .on('mousemove', (ev, d) => tipShow(box.parentElement, t, ev, [d.data[key], C(d.data.weighted) + ' weighted', P(d.data.weighted / tot)]))
+      .on('mouseleave', () => { t.style.display = 'none'; });
+    svg.append('text').attr('x', S / 2).attr('y', S / 2 + 6).attr('text-anchor', 'middle').attr('font-family', 'var(--font-anthropic-serif)').attr('font-size', 18).attr('fill', 'var(--color-fg)').text(C(tot));
+    top.forEach((r, i) => {
+      const li = document.createElement('li');
+      const sw = document.createElement('i'); sw.style.background = palette[i % palette.length];
+      const a = document.createElement('span'); a.textContent = r[key];
+      const b = document.createElement('span'); b.textContent = P(r.weighted / tot);
+      li.append(sw, a, b); if (r.others) li.title = r.others.map((o) => o[key]).join(', ');
+      leg.appendChild(li);
+    });
+  };
+  const axisY = (svg, y, m) => {
+    const g = svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)');
+    const ls = y.ticks(3).map((v) => g.append('text').text(C(v)).attr('y', y(v)).attr('dy', '.32em'));
+    m.l = (d3.max(ls, (s) => s.node().getComputedTextLength()) || 16) + 10;
+    ls.forEach((s) => s.attr('x', m.l - 8).attr('text-anchor', 'end'));
+    return y.ticks(3);
+  };
+  const bars = (box, rows, xKey, yKey, sel, fmtX, onClick, tipLines, bandFn) => {
+    box.replaceChildren();
+    const W = box.clientWidth || 600, H = 200, m = { t: 8, r: 4, b: 24, l: 8 };
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const y = d3.scaleLinear([0, d3.max(rows, (r) => r[yKey]) || 1], [H - m.b, m.t]).nice(3);
+    const ticks = axisY(svg, y, m);
+    const x = d3.scaleBand(rows.map((r) => r[xKey]), [m.l, W - m.r]).padding(0.28);
+    if (bandFn) bandFn(svg, x, m, H);
+    svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).attr('stroke', 'var(--cds-chart-grid)');
+    const bw = Math.min(28, x.bandwidth()), off = (x.bandwidth() - bw) / 2, t = tipFor(box);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', (r) => x(r[xKey]) + off).attr('width', bw).attr('y', (r) => y(r[yKey])).attr('height', (r) => Math.max(0, y(0) - y(r[yKey]))).attr('rx', Math.min(5, bw / 2))
+      .attr('fill', (r) => sel == null || r[xKey] === sel ? dash.colors[0] : 'var(--cds-chart-muted)')
+      .style('cursor', onClick ? 'pointer' : null)
+      .on('click', (ev, r) => onClick && onClick(r))
+      .on('mousemove', (ev, r) => tipShow(box, t, ev, tipLines(r)))
+      .on('mouseleave', () => { t.style.display = 'none'; });
+    const step = Math.ceil(rows.length / Math.max(1, Math.floor((W - m.l) / 50)));
+    svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').selectAll('text').data(rows.filter((r, i) => i % step === 0)).join('text')
+      .attr('x', (r) => x(r[xKey]) + x.bandwidth() / 2).attr('y', H - 6).attr('text-anchor', 'middle').text((r) => fmtX(r[xKey]));
+  };
+  const palette = () => [dash.colors[0], dash.colors[1], dash.colors[2], dash.colors[3], 'var(--cds-chart-muted)'];
+
+  function drawDaily() {
+    const st = dash.data('day_stats');
+    if (st.status === 'error') { el('hour-chart').replaceChildren(Object.assign(document.createElement('div'), { className: 'ux-fail', textContent: 'Failed to load' })); return; }
+    if (st.status !== 'ok') return;
+    const rows = st.data, active = rows.filter((r) => r.requests > 0);
+    let day = dash.params().day;
+    if (!day || !rows.some((r) => r.day === day)) day = (active[active.length - 1] || rows[rows.length - 1]).day;
+    const pk = el('pick-day');
+    pk.replaceChildren(...rows.slice().reverse().filter((r) => r.requests > 0 || r.day === day).map((r) => new Option(dShort(r.day), r.day)));
+    pk.value = day;
+    const r = rows.find((x) => x.day === day), where = 'day=' + day;
+    ['d-w', 'd-c1', 'd-c2', 't-ctx', 't-req', 't-ses', 't-was'].forEach((id) => el(id).setAttribute('data-where', where));
+    el('d-date').textContent = dLab(day);
+    el('d-w').textContent = r.requests ? C(r.weighted) : '0';
+    chip('d-c1', r.day_change, 'vs last active day');
+    chip('d-c2', r.vs_avg7, 'vs 7-day avg');
+    ring('d-ring', r.requests ? 1 - r.waste_share : null, 'efficient');
+    el('t-ctx').textContent = r.requests ? C(r.avg_context) : '—';
+    el('t-req').textContent = N(r.requests);
+    el('t-ses').textContent = N(r.sessions);
+    el('t-was').textContent = r.requests ? C(r.waste_est) : '—';
+    const i = active.findIndex((x) => x.day === day);
+    const win = active.slice(Math.max(0, (i < 0 ? active.length : i + 1) - 14), i < 0 ? active.length : i + 1);
+    const hi = win.findIndex((x) => x.day === day);
+    spark('s-ctx', win.map((x) => x.avg_context), hi); spark('s-req', win.map((x) => x.requests), hi);
+    spark('s-ses', win.map((x) => x.sessions), hi); spark('s-was', win.map((x) => x.waste_est), hi);
+
+    const hr = dash.data('hourly'), wn = dash.data('windows');
+    if (hr.status === 'ok' && wn.status === 'ok') {
+      const ds0 = (window.__CTA_DATA && window.__CTA_DATA.config) ? +window.__CTA_DATA.config.day_start_hour : 6;
+      const order = d3.range(24).map((k) => (k + ds0) % 24);
+      const by = new Map(hr.data.filter((h) => h.day === day).map((h) => [h.clock, h]));
+      const hrs = order.map((c) => by.get(c) || { clock: c, weighted: 0, total: 0, requests: 0 });
+      const wins = wn.data.filter((w) => w.day === day);
+      bars(el('hour-chart'), hrs, 'clock', 'weighted', null, (c) => (c % 3 === 0 ? hh(c) : ''), null,
+        (h) => [hh(h.clock) + '–' + hh(h.clock).slice(0, 3) + '59', C(h.weighted) + ' weighted', h.requests + ' requests'],
+        (svg, x, m, H) => wins.forEach((w) => {
+          const i0 = order.indexOf(+w.start.slice(11, 13)), i1 = Math.min(23, i0 + 4);
+          svg.append('rect').attr('x', x(order[i0]) - 2).attr('width', x(order[i1]) + x.bandwidth() - x(order[i0]) + 4).attr('y', m.t).attr('height', H - m.b - m.t).attr('rx', 8).attr('fill', dash.colors[0]).attr('fill-opacity', 0.07);
+        }));
+      const pills = el('win-pills');
+      pills.replaceChildren(...wins.map((w) => { const s = +w.start.slice(11, 13); const p = document.createElement('span'); p.className = 'ux-pill'; const b = document.createElement('b'); b.textContent = hh(s) + '–' + hh(s + 5); p.append(b, ' · ' + C(w.weighted)); p.title = N(w.requests) + ' requests · ' + C(w.total) + ' raw tokens'; return p; }));
+    }
+
+    const rp = dash.data('report');
+    if (rp.status === 'ok') {
+      let rdate = day;
+      if (!rp.data.some((x) => x.date === day)) rdate = rp.data.map((x) => x.date).filter((x) => x <= day).sort().pop() || day;
+      const items = rp.data.filter((x) => x.date === rdate).sort((a, b) => +a.order - +b.order);
+      const topList = el('r-top'), full = el('r-full');
+      topList.replaceChildren(); full.replaceChildren();
+      el('r-when').textContent = items.length ? (rdate === day ? (items[0].written || '') : 'from ' + dShort(rdate)) : '';
+      if (!items.length) { const li = document.createElement('li'); li.textContent = 'No report for this day yet. One is written each morning for the day before.'; topList.appendChild(li); }
+      let sec = null; const groups = [];
+      items.forEach((x) => { if (x.kind === 'heading') { sec = { h: x.text, tips: [] }; groups.push(sec); } else if (x.kind === 'tip') { if (!sec) { sec = { h: '', tips: [] }; groups.push(sec); } sec.tips.push(x.text); } else { const p = document.createElement('p'); p.textContent = x.text; full.appendChild(p); } });
+      const act = groups.find((g) => /do/i.test(g.h)) || groups[0];
+      (act ? act.tips.slice(0, 3) : []).forEach((tx) => { const li = document.createElement('li'); li.textContent = tx.split('. ')[0].replace(/\.$/, '') + '.'; topList.appendChild(li); });
+      groups.forEach((g) => { if (g.h) { const h = document.createElement('h3'); h.textContent = g.h; full.appendChild(h); } const ul = document.createElement('ul'); g.tips.forEach((tx) => { const li = document.createElement('li'); li.textContent = tx; ul.appendChild(li); }); full.appendChild(ul); });
+    }
+
+    const we = dash.data('weekly_eff');
+    if (we.status === 'ok') {
+      const box = el('ctx-chart'); box.replaceChildren();
+      const rws = we.data, W = box.clientWidth || 360, H = 170, m = { t: 12, r: 10, b: 24, l: 8 };
+      const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+      const y = d3.scaleLinear([0, d3.max(rws, (q) => q.avg_context) || 1], [H - m.b, m.t]).nice(3);
+      const ticks = axisY(svg, y, m);
+      svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).attr('stroke', 'var(--cds-chart-grid)');
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(150000)).attr('y2', y(150000)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+      svg.append('text').attr('x', W - m.r).attr('y', y(150000) - 5).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text('target 150k');
+      const x = d3.scalePoint(rws.map((q) => q.week_start), [m.l + 6, W - m.r - 6]);
+      const grad = 'uxg' + Math.random().toString(36).slice(2, 7);
+      const lg = svg.append('defs').append('linearGradient').attr('id', grad).attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+      [[0, .26], [.25, .16], [.5, .08], [.75, .03], [1, 0]].forEach(([o, a]) => lg.append('stop').attr('offset', o).attr('style', `stop-color:${dash.colors[0]};stop-opacity:${a}`));
+      svg.append('path').datum(rws).attr('fill', `url(#${grad})`).attr('d', d3.area().x((q) => x(q.week_start)).y0(y(0)).y1((q) => y(q.avg_context)));
+      svg.append('path').datum(rws).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round').attr('d', d3.line().x((q) => x(q.week_start)).y((q) => y(q.avg_context)));
+      const t = tipFor(box);
+      svg.append('g').selectAll('circle').data(rws).join('circle').attr('cx', (q) => x(q.week_start)).attr('cy', (q) => y(q.avg_context)).attr('r', 3.5).attr('fill', 'var(--color-panel)').attr('stroke', dash.colors[0]).attr('stroke-width', 2)
+        .on('mousemove', (ev, q) => tipShow(box, t, ev, ['Week of ' + wLab(q.week_start), C(q.avg_context) + ' per request'])).on('mouseleave', () => { t.style.display = 'none'; });
+      const step = Math.ceil(rws.length / Math.max(1, Math.floor(W / 60)));
+      svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').selectAll('text').data(rws.filter((q, k) => k % step === 0)).join('text').attr('x', (q) => x(q.week_start)).attr('y', H - 6).attr('text-anchor', 'middle').text((q) => d3.utcFormat('%b %-d')(new Date(q.week_start + 'T00:00:00Z')));
+    }
+    const wk = dash.data('waste_kinds');
+    if (wk.status === 'ok') donut('kind-donut', 'kind-leg', wk.data.map((k) => ({ kind: k.kind, weighted: k.total })), 'kind', palette());
+    const ev = dash.data('events');
+    if (ev.status === 'ok') {
+      const list = ev.data.filter((e) => e.day === day).sort((a, b) => +b.waste_est - +a.waste_est);
+      const tb = document.querySelector('#ev-table tbody');
+      tb.replaceChildren(...list.map((e) => { const tr = document.createElement('tr'); tr.dataset.key = [e.day, e.session, e.kind].map(encodeURIComponent).join(','); tr.title = e.detail; [[e.title], [e.kind], [C(+e.waste_est), 'n']].forEach(([v, c]) => { const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td); }); return tr; }));
+    }
+  }
+
+  function drawWeekly() {
+    const wk = dash.data('weekly');
+    if (wk.status !== 'ok') return;
+    const weeks = wk.data;
+    let week = dash.params().week;
+    if (!week || !weeks.some((w) => w.week_start === week)) week = weeks[weeks.length - 1].week_start;
+    const pk = el('pick-week');
+    pk.replaceChildren(...weeks.slice().reverse().filter((w) => w.total > 0 || w.week_start === week).map((w) => new Option(wLab(w.week_start), w.week_start)));
+    pk.value = week;
+    const w = weeks.find((x) => x.week_start === week), where = 'week_start=' + week;
+    ['w-w', 'w-c1', 'w-c2', 'wt-out', 'wt-req', 'wt-ses', 'wt-cr'].forEach((id) => el(id).setAttribute('data-where', where));
+    el('w-date').textContent = 'Week of ' + wLab(week);
+    el('w-w').textContent = C(w.weighted);
+    chip('w-c1', w.change, 'vs week before');
+    const c2 = el('w-c2'); c2.className = 'ux-chip'; c2.textContent = C(w.total) + ' raw tokens';
+    const pl = dash.data('period_leaks');
+    const wl = pl.status === 'ok' ? pl.data.filter((q) => q.level === 'week' && q.period === week && q.dim === 'kind') : [];
+    const wWaste = d3.sum(wl, (q) => q.waste);
+    ring('w-ring', w.weighted ? 1 - Math.min(1, wWaste / w.weighted) : null, 'efficient');
+    if (pl.status === 'ok') donut('w-leak-donut', 'w-leak-leg', wl.map((q) => ({ kind: q.name, weighted: q.waste })), 'kind', palette());
+    el('wt-out').textContent = C(w.output); el('wt-req').textContent = N(w.requests); el('wt-ses').textContent = N(w.sessions); el('wt-cr').textContent = w.total ? P(w.cache_share) : '—';
+    const hi = weeks.findIndex((x) => x.week_start === week);
+    spark('ws-out', weeks.map((x) => x.output), hi); spark('ws-req', weeks.map((x) => x.requests), hi);
+    spark('ws-ses', weeks.map((x) => x.sessions), hi); spark('ws-cr', weeks.map((x) => x.cache_share), hi);
+    bars(el('weekly-chart'), weeks, 'week_start', 'weighted', week, (s) => d3.utcFormat('%b %-d')(new Date(s + 'T00:00:00Z')), (r) => dash.setParams({ week: r.week_start }),
+      (r) => ['Week of ' + wLab(r.week_start), C(r.weighted) + ' weighted', N(r.requests) + ' requests']);
+    const bt = dash.data('by_task'), bp = dash.data('by_project'), bs = dash.data('by_session'), rt = dash.data('routine');
+    if (bt.status === 'ok') donut('task-donut', 'task-leg', bt.data.filter((r) => r.week_start === week), 'task_type', palette());
+    if (bp.status === 'ok') donut('proj-donut', 'proj-leg', bp.data.filter((r) => r.week_start === week), 'project', palette());
+    if (rt.status === 'ok') {
+      const box = el('heat-chart'); box.replaceChildren();
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const W = box.clientWidth || 600, lw = 34, cw = (W - lw) / 24, ch = Math.min(22, Math.max(14, cw)), H = days.length * ch + 18;
+      const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+      const mx = d3.max(rt.data, (q) => q.requests) || 1, sc = d3.scaleSqrt([0, mx], [0, 1]), t = tipFor(box);
+      svg.append('g').selectAll('rect').data(rt.data).join('rect').attr('x', (q) => lw + q.hour * cw + 1.5).attr('y', (q) => days.indexOf(q.weekday) * ch + 1.5).attr('width', Math.max(1, cw - 3)).attr('height', ch - 3).attr('rx', 4)
+        .attr('fill', dash.colors[0]).attr('fill-opacity', (q) => (q.requests ? 0.1 + 0.9 * sc(q.requests) : 0.04))
+        .on('mousemove', (ev, q) => tipShow(box, t, ev, [q.weekday + ' ' + hh(q.hour), N(q.requests) + ' requests'])).on('mouseleave', () => { t.style.display = 'none'; });
+      const g = svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)');
+      days.forEach((d, k) => g.append('text').text(d).attr('x', 0).attr('y', k * ch + ch / 2).attr('dy', '.32em'));
+      [0, 6, 12, 18].forEach((h) => g.append('text').text(hh(h)).attr('x', lw + h * cw + cw / 2).attr('y', H - 3).attr('text-anchor', 'middle'));
+    }
+    if (bs.status === 'ok') {
+      const tb = document.querySelector('#ses-table tbody');
+      tb.replaceChildren(...bs.data.filter((r) => r.week_start === week).sort((a, b) => b.weighted - a.weighted).map((r) => { const tr = document.createElement('tr'); tr.dataset.key = encodeURIComponent(r.week_start) + ',' + encodeURIComponent(r.session); tr.title = r.project; [[r.title], [r.task_type, 'ux-hide'], [C(r.weighted), 'n']].forEach(([v, c]) => { const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td); }); return tr; }));
+    }
+  }
+
+  const FIX = { 'Context bloat': 'keep sessions small: one task per session, /compact at each milestone.', 'Old session resumed': 'start a fresh session with a short handoff note instead of reopening old ones.', 'Duplicate session': 'never run the same request in two sessions at once.', 'Polling / loop': 'ask for one final report instead of wait-and-check loops.', 'Context overflow': 'split big tasks before the context fills up.' };
+  el('pick-period').addEventListener('change', (e) => dash.setParams({ [tab]: e.target.value }));
+  const pLab = (level, p) => level === 'all' ? 'All time' : level === 'year' ? p : d3.utcFormat('%B %Y')(new Date(p + '-01T00:00:00Z'));
+  const pShort = (level, p) => level === 'year' ? p : d3.utcFormat('%b %Y')(new Date(p + '-01T00:00:00Z'));
+
+  function drawPeriod(level) {
+    const ps = dash.data('periods');
+    if (ps.status !== 'ok') return;
+    const list = ps.data.filter((r) => r.level === level);
+    if (!list.length) return;
+    let key = level === 'all' ? 'all' : dash.params()[level];
+    if (!key || !list.some((r) => r.period === key)) key = list[list.length - 1].period;
+    const pk = el('pick-period');
+    pk.hidden = level === 'all';
+    if (level !== 'all') { pk.replaceChildren(...list.slice().reverse().map((r) => new Option(pShort(level, r.period), r.period))); pk.value = key; }
+    const r = list.find((x) => x.period === key);
+    const where = 'level=' + level + '&period=' + encodeURIComponent(key);
+    ['p-w', 'p-c1', 'p-c2', 'pt-ctx', 'pt-req', 'pt-ses', 'pt-was'].forEach((id) => el(id).setAttribute('data-where', where));
+
+    // sub-periods: days of the month, or months of the year / all time
+    let sub;
+    if (level === 'month') {
+      const ds = dash.data('day_stats');
+      sub = ds.status === 'ok' ? ds.data.filter((d) => d.day.slice(0, 7) === key).map((d) => ({ key: d.day, label: d3.utcFormat('%-d')(new Date(d.day + 'T00:00:00Z')), name: dShort(d.day), weighted: d.weighted, waste: d.waste_est, requests: d.requests, sessions: d.sessions, ctx: d.avg_context })) : [];
+    } else {
+      sub = ps.data.filter((m) => m.level === 'month' && (level === 'all' || m.period.slice(0, 4) === key)).map((m) => ({ key: m.period, label: d3.utcFormat('%b')(new Date(m.period + '-01T00:00:00Z')), name: pShort('month', m.period), weighted: m.weighted, waste: m.waste_est, requests: m.requests, sessions: m.sessions, ctx: m.avg_context }));
+    }
+    const first = level === 'all' && sub.length ? ' · since ' + sub[0].name : '';
+    el('p-date').textContent = pLab(level, key) + first;
+    el('p-w').textContent = C(r.weighted);
+    if (level === 'all') { const c = el('p-c1'); c.className = 'ux-chip'; c.textContent = C(r.total) + ' raw tokens'; }
+    else chip('p-c1', r.change, level === 'month' ? 'vs last active month' : 'vs last year');
+    const c2 = el('p-c2'); c2.className = 'ux-chip'; c2.textContent = r.active_days + ' active day' + (r.active_days === 1 ? '' : 's');
+    ring('p-ring', 1 - r.waste_share, 'efficient');
+    el('pt-ctx').textContent = C(r.avg_context); el('pt-req').textContent = N(r.requests); el('pt-ses').textContent = N(r.sessions); el('pt-was').textContent = C(r.waste_est);
+    spark('ps-ctx', sub.map((s) => s.ctx), -1); spark('ps-req', sub.map((s) => s.requests), -1);
+    spark('ps-ses', sub.map((s) => s.sessions), -1); spark('ps-was', sub.map((s) => s.waste), -1);
+
+    // stacked bars: weighted with avoidable part
+    el('p-bars-title').textContent = level === 'month' ? 'Day by day' : 'Month by month';
+    const box = el('p-bars'); box.replaceChildren();
+    if (sub.length) {
+      const W = box.clientWidth || 600, H = 200, m = { t: 8, r: 4, b: 24, l: 8 };
+      const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+      const y = d3.scaleLinear([0, d3.max(sub, (s) => s.weighted) || 1], [H - m.b, m.t]).nice(3);
+      const ticks = axisY(svg, y, m);
+      svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).attr('stroke', 'var(--cds-chart-grid)');
+      const x = d3.scaleBand(sub.map((s) => s.key), [m.l, W - m.r]).padding(0.28);
+      const bw = Math.min(28, x.bandwidth()), off = (x.bandwidth() - bw) / 2, rx = Math.min(5, bw / 2), t = tipFor(box);
+      const g = svg.append('g').selectAll('g').data(sub).join('g')
+        .on('mousemove', (ev, s) => tipShow(box, t, ev, [s.name, C(s.weighted) + ' weighted', C(s.waste) + ' avoidable', N(s.requests) + ' requests']))
+        .on('mouseleave', () => { t.style.display = 'none'; });
+      g.append('rect').attr('x', (s) => x(s.key) + off).attr('width', bw).attr('y', (s) => y(s.weighted)).attr('height', (s) => Math.max(0, y(0) - y(s.weighted))).attr('rx', rx).attr('fill', dash.colors[0]).attr('fill-opacity', 0.35);
+      g.append('rect').attr('x', (s) => x(s.key) + off).attr('width', bw).attr('y', (s) => y(Math.min(s.waste, s.weighted))).attr('height', (s) => Math.max(0, y(0) - y(Math.min(s.waste, s.weighted)))).attr('rx', rx).attr('fill', dash.colors[0]);
+      const step = Math.ceil(sub.length / Math.max(1, Math.floor((W - m.l) / 34)));
+      svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').selectAll('text').data(sub.filter((s, k) => k % step === 0)).join('text')
+        .attr('x', (s) => x(s.key) + x.bandwidth() / 2).attr('y', H - 6).attr('text-anchor', 'middle').text((s) => s.label);
+    }
+
+    // context trend over active sub-periods
+    const act = sub.filter((s) => s.requests > 0);
+    const tb = el('p-trend'); tb.replaceChildren();
+    if (act.length) {
+      const W = tb.clientWidth || 360, H = 170, m = { t: 12, r: 10, b: 24, l: 8 };
+      const svg = d3.select(tb).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+      const y = d3.scaleLinear([0, Math.max(160000, d3.max(act, (s) => s.ctx) || 1)], [H - m.b, m.t]).nice(3);
+      const ticks = axisY(svg, y, m);
+      svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).attr('stroke', 'var(--cds-chart-grid)');
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(150000)).attr('y2', y(150000)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+      svg.append('text').attr('x', W - m.r).attr('y', y(150000) - 5).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text('target 150k');
+      const x = d3.scalePoint(act.map((s) => s.key), [m.l + 6, W - m.r - 6]).padding(act.length === 1 ? 0.5 : 0);
+      svg.append('path').datum(act).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round').attr('d', d3.line().x((s) => x(s.key)).y((s) => y(s.ctx)));
+      const t = tipFor(tb);
+      svg.append('g').selectAll('circle').data(act).join('circle').attr('cx', (s) => x(s.key)).attr('cy', (s) => y(s.ctx)).attr('r', 3.5).attr('fill', 'var(--color-panel)').attr('stroke', dash.colors[0]).attr('stroke-width', 2)
+        .on('mousemove', (ev, s) => tipShow(tb, t, ev, [s.name, C(s.ctx) + ' per request'])).on('mouseleave', () => { t.style.display = 'none'; });
+      const step = Math.ceil(act.length / Math.max(1, Math.floor(W / 44)));
+      svg.append('g').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').selectAll('text').data(act.filter((s, k) => k % step === 0)).join('text').attr('x', (s) => x(s.key)).attr('y', H - 6).attr('text-anchor', 'middle').text((s) => s.label);
+    }
+
+    // leaks and mix
+    const pl = dash.data('period_leaks');
+    const kinds = pl.status === 'ok' ? pl.data.filter((q) => q.level === level && q.period === key && q.dim === 'kind') : [];
+    const sess = pl.status === 'ok' ? pl.data.filter((q) => q.level === level && q.period === key && q.dim === 'session').sort((a, b) => b.waste - a.waste) : [];
+    if (pl.status === 'ok') {
+      donut('p-leak-donut', 'p-leak-leg', kinds.map((q) => ({ kind: q.name, weighted: q.waste })), 'kind', palette());
+      const body = document.querySelector('#p-leak-table tbody');
+      body.replaceChildren(...sess.slice(0, 12).map((q) => { const tr = document.createElement('tr'); tr.dataset.key = [q.level, q.period, q.dim, q.name].map(encodeURIComponent).join(','); [[q.title], [C(q.waste), 'n']].forEach(([v, c]) => { const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td); }); return tr; }));
+    }
+    const pm = dash.data('period_mix');
+    if (pm.status === 'ok') {
+      const mine = pm.data.filter((q) => q.level === level && q.period === key);
+      donut('p-task-donut', 'p-task-leg', mine.filter((q) => q.dim === 'task').map((q) => ({ name: q.name, weighted: q.weighted })), 'name', palette());
+      donut('p-proj-donut', 'p-proj-leg', mine.filter((q) => q.dim === 'project').map((q) => ({ name: q.name, weighted: q.weighted })), 'name', palette());
+    }
+
+    // analyzer lines
+    const ul = el('p-tips'); ul.replaceChildren();
+    const add = (s) => { const li = document.createElement('li'); li.textContent = s; ul.appendChild(li); };
+    add(`${P(1 - r.waste_share)} efficient: about ${C(r.waste_est)} of ${C(r.weighted)} weighted tokens were avoidable.`);
+    const totW = d3.sum(kinds, (q) => q.waste);
+    const top = kinds.slice().sort((a, b) => b.waste - a.waste)[0];
+    if (top && totW) add(`Biggest leak: ${top.name.toLowerCase()} (${P(top.waste / totW)} of avoidable). Fix: ${FIX[top.name] || 'review the flagged sessions.'}`);
+    if (act.length > 1) { const a = act[0], b = act[act.length - 1], ch = (b.ctx - a.ctx) / a.ctx; add(`Context per request went from ${C(a.ctx)} (${a.name}) to ${C(b.ctx)} (${b.name}), ${ch <= 0 ? 'leaner by' : 'heavier by'} ${P(Math.abs(ch))}.`); }
+    if (sess[0]) add(`Leakiest session: ${sess[0].title} (${C(sess[0].waste)} avoidable).`);
+  }
+
+  function draw() {
+    if (tab === 'daily') drawDaily(); else if (tab === 'weekly') drawWeekly(); else drawPeriod(tab);
+    if (!animated && dash.data('day_stats').status === 'ok') { animated = true; document.querySelectorAll('.ux-page > *').forEach((n, k) => { n.classList.add('ux-in'); n.style.animationDelay = (k * 40) + 'ms'; }); }
+  }
+  let first = true;
+  dash.onData(() => { if (first) { first = false; const hsh = location.hash.slice(1); if (['weekly', 'month', 'year', 'all'].includes(hsh)) { show(hsh); return; } } draw(); });
+})();
+</script>

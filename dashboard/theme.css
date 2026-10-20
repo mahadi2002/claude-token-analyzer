@@ -1,0 +1,33 @@
+/* Design tokens used by the dashboard page. Light and dark follow the system setting. */
+:root {
+  --font-anthropic-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-anthropic-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --color-bg: #f6f5f1; --color-panel: #ffffff; --color-fg: #1f1e1b; --color-fg-muted: #6b6860;
+  --color-border-line: #e6e3db; --color-ok: #2f7d4f; --color-warn: #b5651d; --color-bad: #c0392b;
+  --series-1: #c96442; --series-2: #3f6f9f; --series-3: #7a8f3d; --series-4: #8a5aa8;
+  --series-5: #c39b2e; --series-6: #3a8c8c; --series-7: #a64d6d; --series-8: #6b6860;
+  --cds-chart-grid: #eeebe4; --cds-chart-axis: #cfcac0; --cds-chart-muted: #d9d4ca; --cds-chart-reference: #9a958b;
+  --cds-chart-status-critical: #c0392b;
+  --cds-surface-popover: #ffffff; --cds-border: #e0dcd3; --cds-shadow-popover: 0 8px 24px rgba(31, 30, 27, .12);
+  --cds-text-secondary: #6b6860;
+  --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 16px; --cds-font-size-title: 26px;
+  --cds-font-weight-medium: 600;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 14px; --cds-gap-lg: 22px; --cds-gap-xl: 32px;
+  --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 18px; --cds-pad-xl: 28px;
+  --cds-radius: 10px; --cds-dur-slow: 260ms; --cds-ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #191816; --color-panel: #22211e; --color-fg: #f1eee7; --color-fg-muted: #a39f95;
+    --color-border-line: #34322d; --color-ok: #6cc28c; --color-warn: #e0a15c; --color-bad: #e5675a;
+    --series-1: #e08a68; --series-2: #79a6d6; --series-3: #a9bf6a; --series-4: #b98ad6;
+    --series-5: #e0bd5a; --series-6: #6cc0c0; --series-7: #d77f9f; --series-8: #a39f95;
+    --cds-chart-grid: #2c2a26; --cds-chart-axis: #4a4740; --cds-chart-muted: #3e3b35; --cds-chart-reference: #8a867c;
+    --cds-chart-status-critical: #e5675a;
+    --cds-surface-popover: #2a2925; --cds-border: #3d3a34; --cds-shadow-popover: 0 8px 24px rgba(0, 0, 0, .45);
+    --cds-text-secondary: #a39f95;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); }
+#dash-root { padding: clamp(16px, 4vw, 40px); }

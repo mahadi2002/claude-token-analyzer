@@ -1,0 +1,21 @@
+{
+  "name": "token-analyzer",
+  "version": "0.1.0",
+  "description": "See where your Claude Code tokens go: day, week, month, year and all-time dashboard, 5-hour windows, a token-leak analyzer and a daily report with tips. Runs locally, uses no tokens.",
+  "author": {
+    "name": "Mahadi Hasan Tanmay",
+    "url": "https://github.com/mahadi2002"
+  },
+  "homepage": "https://github.com/mahadi2002/claude-token-analyzer",
+  "repository": "https://github.com/mahadi2002/claude-token-analyzer",
+  "license": "Apache-2.0",
+  "keywords": [
+    "usage",
+    "tokens",
+    "dashboard",
+    "analytics",
+    "cost",
+    "claude-code"
+  ],
+  "icon": ".claude-plugin/icon.png"
+}
