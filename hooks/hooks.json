@@ -1,5 +1,5 @@
 {
-  "description": "Once per day, refresh the usage dashboard in the background when a session starts.",
+  "description": "Once a day, refresh the dashboard in the background at session start; warn about large or expired contexts before prompts.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,17 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\"; exit 0",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/nudge.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/scripts/nudge.py\"; exit 0",
+            "timeout": 5
           }
         ]
       }

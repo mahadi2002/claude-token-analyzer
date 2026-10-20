@@ -12,23 +12,40 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-from common import OUT, current_day, load_config
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from common import OUT, current_day, load_config  # noqa: E402
 
 F = lambda n: f"{n / 1e9:.1f}B" if n >= 1e9 else f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}k" if n >= 1e3 else f"{n:.0f}"
 pct = lambda x: f"{x * 100:.0f}%"
 label = lambda d: datetime.fromisoformat(d).strftime("%a %b ") + str(datetime.fromisoformat(d).day)
-num = lambda r, k: float(r.get(k) or 0)
 
-FIX = {
-    "Context bloat": lambda e: f"In \"{e['title']}\", run /compact after each milestone, or start a new session per task.",
-    "Old session resumed": lambda e: f"Retire \"{e['title']}\": ask it once for a short handoff note, then continue in a fresh session.",
-    "Duplicate session": lambda e: "Close one of two parallel sessions before repeating the same request.",
-    "Polling / loop": lambda e: f"\"{e['title']}\" ran a wait-and-check loop; ask for one final report instead.",
-    "Context overflow": lambda e: "Split big tasks before the context fills; reloading from a summary is expensive.",
-}
+HANDOFF = ("Before we stop: write a handoff note for a fresh session. Include the goal, what is done, what is left, "
+           "key file paths and decisions, and anything I must not forget. Keep it under 200 words.")
 
 
-def read(name):
+def fix(e, cfg):
+    """(tip, copyable action) for one leak row."""
+    t, k = e["title"], e["kind"]
+    ttl = cfg["cache_ttl_minutes"]
+    ttl_txt = "an hour" if ttl >= 60 else f"{ttl} minutes"
+    return {
+        "Context bloat": (f"\"{t}\" is carrying a large context. Run /compact after each milestone, /clear between unrelated tasks, "
+                          "and start a new session per task.", "/compact Keep only the current goal, decisions made, and open TODOs."),
+        "Cache expired": (f"\"{t}\" was resumed after the prompt cache expired (it lasts about {ttl_txt} on your plan), so the whole "
+                          "context was sent again at the cache-write price. Retire long sessions with a handoff note, or /compact before a break.", HANDOFF),
+        "Model switch": (f"\"{t}\" switched models mid-session, which re-sends the full context. Pick the model at the start or right after /clear.", None),
+        "Auto-compaction": (f"\"{t}\" filled its context and was compacted automatically. Compact by hand earlier, while it is cheaper, "
+                            "and tell it what to keep.", "/compact Keep only the current goal, decisions made, and open TODOs."),
+        "Context overflow": ("A session ran out of context and continued from a summary. Split large tasks into separate sessions before that happens.", HANDOFF),
+        "Duplicate session": ("The same request ran in two sessions. Close one before repeating a request.", None),
+        "Polling / loop": (f"\"{t}\" ran a wait-and-check loop. Ask for one final report instead of repeated checks.", "Don't poll or wait in a loop. Do the work once and give me one final report."),
+        "Noisy tool output": (f"A command in \"{t}\" returned very long output that stayed in the context. Use quiet flags, trim to the relevant lines, "
+                              "or run noisy jobs in a subagent.", "When a command's output is long, show me only the lines that matter and summarise the rest."),
+        "Model overkill": (f"\"{t}\" used a top-tier model for light steps (reading, searching, short replies). Use Sonnet or Haiku for routine work.", "/model sonnet"),
+    }.get(k, (f"Review \"{t}\".", None))
+
+
+def read_csv(name):
     with open(os.path.join(OUT, name), encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
@@ -44,74 +61,69 @@ def main(argv):
     if any(r["date"] == report_day for r in rows) and "--force" not in argv:
         print("SKIP", report_day)
         return 0
-
-    daily = {r["day"]: r for r in read("daily.csv")}
-    events = read("events.csv")
-    hourly = read("usage_hourly.csv")
-    active = [d for d in sorted(daily) if num(daily[d], "requests") > 0 and d < report_day]
-    d = daily.get(report_day, {})
+    with open(os.path.join(OUT, "agg.json"), encoding="utf-8") as f:
+        agg = json.load(f)
+    days = agg["levels"]["day"]
+    events = [e for e in read_csv("events.csv")]
+    active = [d for d in sorted(days) if days[d]["requests"] > 0 and d < report_day]
+    d = days.get(report_day)
     written = now.strftime("%b ") + str(now.day) + now.strftime(", %H:%M")
-    out = []
+    out, extra = [], []
 
-    def add(kind, text):
-        out.append({"date": report_day, "order": len(out) + 1, "kind": kind, "text": text, "written": written})
+    def add(kind, text, copy=None):
+        out.append({"date": report_day, "order": len(out) + 1, "kind": kind, "text": text, "written": written, **({"copy": copy} if copy else {})})
 
-    extra = []
-    if not d or num(d, "requests") == 0:
+    if not d or d["requests"] == 0:
         add("summary", f"{label(report_day)}: no Claude Code usage.")
         since = (datetime.fromisoformat(report_day) - timedelta(days=7)).date().isoformat()
         recent = [e for e in events if since <= e["day"] < report_day]
         if recent:
-            kinds = {}
-            for e in recent:
-                kinds[e["kind"]] = kinds.get(e["kind"], 0) + float(e["waste_est"])
-            top = max(kinds, key=kinds.get)
+            top = max(recent, key=lambda e: float(e["waste_est"]))
+            tip, copy = fix(top, cfg)
             add("heading", "What to do today")
-            add("tip", FIX[top](max((e for e in recent if e["kind"] == top), key=lambda e: float(e["waste_est"]))))
+            add("tip", tip, copy)
     else:
-        w, req, ses, ctx = num(d, "weighted"), num(d, "requests"), num(d, "sessions"), num(d, "avg_context")
-        waste, share = num(d, "waste_est"), num(d, "waste_share")
-        s = f"{label(report_day)}: {F(w)} weighted tokens, {int(req)} requests, {int(ses)} session{'s' if ses != 1 else ''}."
+        w = d["weighted"]
+        s = f"{label(report_day)}: {F(w)} weighted tokens (about ${d['cost']:.2f} at API prices), {d['requests']} requests, {d['sessions']} session{'s' if d['sessions'] != 1 else ''}."
         if active:
-            p = daily[active[-1]]
-            pw, pc = num(p, "weighted"), num(p, "avg_context")
-            if pw:
-                s += f" {'Down' if w < pw else 'Up'} {pct(abs(w - pw) / pw)} from {label(active[-1])} ({F(pw)}); context per request {F(ctx)} vs {F(pc)}."
-        s += f" About {pct(share)} ({F(waste)}) avoidable."
+            p = days[active[-1]]
+            if p["weighted"]:
+                s += f" {'Down' if w < p['weighted'] else 'Up'} {pct(abs(w - p['weighted']) / p['weighted'])} from {label(active[-1])}; context per request {F(d['avg_context'])} vs {F(p['avg_context'])}."
+        s += f" Avoidable: {F(d['avoid_low'])} likely, up to {F(d['avoid_high'])}."
         add("summary", s)
-        hrs = {}
-        for h in hourly:
-            if h["day"] == report_day:
-                hrs[h["hour"][:13]] = hrs.get(h["hour"][:13], 0) + float(h["weighted"])
-        wins, cur = [], None
-        for k in sorted(hrs):
-            t = datetime.fromisoformat(k + ":00:00")
-            if not cur or t >= cur[0] + timedelta(hours=5):
-                cur = [t, 0.0]
-                wins.append(cur)
-            cur[1] += hrs[k]
+        wins = [x for x in agg["windows"] if x[2] == report_day]
         if wins:
-            b = max(wins, key=lambda x: x[1])
-            extra.append(f"Busiest 5-hour window: {b[0]:%H:00}-{b[0] + timedelta(hours=5):%H:00} ({F(b[1])} weighted; {len(wins)} window{'s' if len(wins) != 1 else ''} that day).")
+            b = max(wins, key=lambda x: x[3])
+            st = datetime.fromtimestamp(b[0])
+            extra.append(f"Busiest 5-hour window: {st:%H:%M}-{st + timedelta(hours=5):%H:%M} ({F(b[3])} weighted; {len(wins)} window{'s' if len(wins) != 1 else ''} that day).")
         evs = sorted((e for e in events if e["day"] == report_day), key=lambda e: -float(e["waste_est"]))
         if evs:
             add("heading", "What leaked")
             for e in evs[:3]:
-                add("tip", f"{e['title']}: {e['kind'].lower()}, about {F(float(e['waste_est']))} ({e['detail']}).")
+                add("tip", f"{e['title']}: {e['kind'].lower()} ({e['confidence']}), about {F(float(e['waste_est']))}. {e['detail'][0].upper() + e['detail'][1:]}.")
             add("heading", "What to do today")
             seen = set()
             for e in evs:
                 if e["kind"] not in seen and len(seen) < 3:
                     seen.add(e["kind"])
-                    add("tip", FIX[e["kind"]](e))
+                    tip, copy = fix(e, cfg)
+                    add("tip", tip, copy)
         if len(active) >= 7:
-            a7 = [daily[x] for x in active[-7:]]
-            avg = sum(num(x, "weighted") for x in a7) / 7
-            sh = sum(num(x, "waste_est") for x in a7) / max(1, sum(num(x, "weighted") for x in a7))
+            a7 = [days[x] for x in active[-7:]]
+            avg = sum(x["weighted"] for x in a7) / 7
+            sh = sum(x["avoid_low"] for x in a7) / max(1, sum(x["weighted"] for x in a7))
+            today_sh = d["avoid_low"] / w if w else 0
             if avg:
                 add("heading", "Trend")
                 add("tip", f"{'Below' if w < avg else 'Above'} your 7-active-day average of {F(avg)} by {pct(abs(w - avg) / avg)}. "
-                           f"Avoidable share {pct(share)} vs {pct(sh)} over those days ({'better' if share < sh else 'worse'}).")
+                           f"Likely-avoidable share {pct(today_sh)} vs {pct(sh)} over those days ({'better' if today_sh <= sh else 'worse'}).")
+    fc = (agg.get("limits") or {}).get("forecast") or {}
+    if fc.get("seven_day"):
+        sd = fc["seven_day"]
+        msg = f"Weekly limit at {sd['pct']:.0f}% (last reading)."
+        if sd.get("hits_at"):
+            msg += f" At the recent pace it runs out {datetime.fromtimestamp(sd['hits_at']):%a %H:%M}, before it resets."
+        extra.append(msg)
 
     cut = (datetime.fromisoformat(report_day) - timedelta(days=cfg["report_history_days"])).date().isoformat()
     rows = [r for r in rows if r["date"] != report_day and r["date"] >= cut] + out
@@ -119,7 +131,7 @@ def main(argv):
         json.dump(rows, f, ensure_ascii=False, indent=1)
     md = [f"# Claude usage report: {label(report_day)}", "", out[0]["text"], *extra]
     for r in out[1:]:
-        md.append(f"\n## {r['text']}\n" if r["kind"] == "heading" else f"- {r['text']}")
+        md.append(f"\n## {r['text']}\n" if r["kind"] == "heading" else f"- {r['text']}" + (f"\n  `{r['copy']}`" if r.get("copy") else ""))
     with open(os.path.join(OUT, "report.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(md) + "\n")
     print("OK", report_day)

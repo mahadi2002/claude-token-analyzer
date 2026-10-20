@@ -1,0 +1,17 @@
+{
+  "_source": "https://platform.claude.com/docs/en/about-claude/pricing (checked 2026-10-21). USD per million tokens. First matching pattern wins; patterns are regular expressions on the model id.",
+  "reference": "sonnet-5",
+  "models": [
+    {"key": "fable-5.1",  "match": "fable-5-1|fable-5\\.1|mythos-5-1|mythos-5\\.1", "input": 10, "cache_write_5m": 12.5, "cache_write_1h": 20, "cache_read": 0.25, "output": 50},
+    {"key": "fable-5",    "match": "fable|mythos",                "input": 10, "cache_write_5m": 12.5, "cache_write_1h": 20, "cache_read": 1.0,  "output": 50},
+    {"key": "opus-5.5",   "match": "opus-5-5|opus-5\\.5",         "input": 4,  "cache_write_5m": 5,    "cache_write_1h": 8,  "cache_read": 0.2,  "output": 20},
+    {"key": "opus-5",     "match": "opus-5|opus-4-[5-9]",         "input": 5,  "cache_write_5m": 6.25, "cache_write_1h": 10, "cache_read": 0.5,  "output": 25},
+    {"key": "opus-4",     "match": "opus-4|opus",                 "input": 15, "cache_write_5m": 18.75,"cache_write_1h": 30, "cache_read": 1.5,  "output": 75},
+    {"key": "sonnet-5.5", "match": "sonnet-5-5|sonnet-5\\.5",     "input": 2,  "cache_write_5m": 2.5,  "cache_write_1h": 4,  "cache_read": 0.1,  "output": 10},
+    {"key": "sonnet-5",   "match": "sonnet-5",                    "input": 2,  "cache_write_5m": 2.5,  "cache_write_1h": 4,  "cache_read": 0.2,  "output": 10},
+    {"key": "sonnet-4",   "match": "sonnet",                      "input": 3,  "cache_write_5m": 3.75, "cache_write_1h": 6,  "cache_read": 0.3,  "output": 15},
+    {"key": "haiku-5.5",  "match": "haiku-5-5|haiku-5\\.5",       "input": 0.1,"cache_write_5m": 0.125,"cache_write_1h": 0.2,"cache_read": 0.01, "output": 0.5},
+    {"key": "haiku-4.5",  "match": "haiku-4-5|haiku-4\\.5",       "input": 1,  "cache_write_5m": 1.25, "cache_write_1h": 2,  "cache_read": 0.1,  "output": 5},
+    {"key": "haiku-3.5",  "match": "haiku",                       "input": 0.8,"cache_write_5m": 1,    "cache_write_1h": 1.6,"cache_read": 0.08, "output": 4}
+  ]
+}

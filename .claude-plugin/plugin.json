@@ -1,6 +1,6 @@
 {
   "name": "token-analyzer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "See where your Claude Code tokens go: day, week, month, year and all-time dashboard, 5-hour windows, a token-leak analyzer and a daily report with tips. Runs locally, uses no tokens.",
   "author": {
     "name": "Mahadi Hasan Tanmay",
